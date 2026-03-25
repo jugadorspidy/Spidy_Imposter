@@ -22,7 +22,7 @@ jobs:
           channel: 'stable'
 
       - name: Build APK
-        run: flet build apk --name "ImposterGame"
+        run: flet build apk
 
       - name: Upload APK
         uses: actions/upload-artifact@v3
