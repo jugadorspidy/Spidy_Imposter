@@ -79,6 +79,27 @@ CATEGORIES = {
               "Mario", "Zelda", "Tetris", "Scrabble", "Carrom", "Snakes & Ladders", "Clash Royale"],
 }
 
+# ─── Weekly Word Rotation ───────────────────────────────────────────────────────
+def get_weekly_categories():
+    """Returns a subset of words per category that rotates automatically every week."""
+    year, week, _ = datetime.now().isocalendar()
+    seed = f"{year}-W{week}"
+    
+    # Create a seeded Random instance so the words stay exactly the same 
+    # all week, but change on Monday for every category.
+    rng = random.Random(seed)
+    
+    weekly_categories = {}
+    for cat, words in CATEGORIES.items():
+        shuffled = words[:]
+        rng.shuffle(shuffled)
+        # Select 10 random words for the week (or all if less than 10)
+        weekly_categories[cat] = shuffled[:10] if len(shuffled) >= 10 else shuffled
+        
+    return weekly_categories
+
+WEEKLY_CATEGORIES = get_weekly_categories()
+
 # ─── History ────────────────────────────────────────────────────────────────────
 def save_game_history(data):
     file_path = "imposter_history.json"
@@ -266,7 +287,7 @@ class ImposterGame:
     # ── Screen 3 – Categories ──────────────────────────────────────────────────
     def show_categories_view(self):
         def on_pick(cat):
-            item = random.choice(CATEGORIES[cat])
+            item = random.choice(WEEKLY_CATEGORIES[cat])
             players = self.game_state["player_names"][:]
             random.shuffle(players)
             imposters = set(players[:self.game_state["num_imposters"]])
@@ -294,7 +315,7 @@ class ImposterGame:
                 border=ft.Border.all(2, self.TEAL), ink=True,
                 on_click=lambda e, c=cat: on_pick(c),
             )
-            for cat in CATEGORIES
+            for cat in WEEKLY_CATEGORIES
         ]
 
         grid = ft.Row(buttons, wrap=True, alignment=ft.MainAxisAlignment.CENTER)
@@ -370,23 +391,8 @@ class ImposterGame:
                 ft.Text(self.game_state["selected_category"], size=22,
                         color=self.WHITE, weight=ft.FontWeight.BOLD,
                         text_align=ft.TextAlign.CENTER),
-                self._gap(6),
-                ft.Container(
-                    content=ft.Image(
-                        src=f"https://loremflickr.com/320/240/{self.game_state['selected_category']},abstract,collage/all",
-                        width=250, height=180, fit=ft.BoxFit.COVER,
-                        border_radius=10,
-                    ),
-                    border=ft.Border.all(2, self.RED),
-                    border_radius=12,
-                )
             ], horizontal_alignment=ft.CrossAxisAlignment.CENTER, spacing=8)
         else:
-                # Create refined search tags
-                search_tags = f"{role_data['item']},{self.game_state['selected_category']}".replace(" ", "")
-                if self.game_state["selected_category"] == "Countries":
-                    search_tags += ",flag,map"
-
                 badge = ft.Column([
                     ft.Icon(ft.Icons.CHECK_CIRCLE_OUTLINE, color=self.TEAL, size=80),
                     ft.Text("YOU ARE NOT THE IMPOSTER", size=16, color=self.TEAL,
@@ -402,16 +408,6 @@ class ImposterGame:
                             text_align=ft.TextAlign.CENTER),
                     ft.Text(role_data["item"], size=34, color=self.CYAN,
                             weight=ft.FontWeight.BOLD, text_align=ft.TextAlign.CENTER),
-                    self._gap(10),
-                    ft.Container(
-                        content=ft.Image(
-                            src=f"https://loremflickr.com/320/240/{search_tags}/all",
-                            width=250, height=180, fit=ft.BoxFit.COVER,
-                            border_radius=10,
-                        ),
-                        border=ft.Border.all(2, self.TEAL),
-                        border_radius=12,
-                    )
                 ], horizontal_alignment=ft.CrossAxisAlignment.CENTER, spacing=4)
 
         return ft.Column([
